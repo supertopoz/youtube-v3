@@ -15,12 +15,18 @@
 
 'use strict';
 
+var https = require('https');
+var youtube = require('./youtube.js')
+//const {auth} = require('google-auth-library');
 // [START app]
+var fs = require('fs');
+var readline = require('readline');
 const express = require('express');
-
 const app = express();
 
-app.get('/hello', (req, res) => {
+app.get('/upload', (req, res) => {
+  //uploadTheVideo();
+  runVideoUpload();
   res.status(200).send('Hello, world2!').end();
 });
 
@@ -30,4 +36,63 @@ app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
   console.log('Press Ctrl+C to quit.');
 });
-// [END app]
+
+
+
+const runVideoUpload = async () => {
+
+  const fistResponse = await getVideoFromFirebase();
+  const secondResponse = await uploadTheVideo();
+// const thirdAsyncRequest = await example.thirdAsyncRequest(secondResponse);
+};
+
+
+
+var getVideoFromFirebase = function(){
+    return new Promise((resolve,reject) => {
+
+   var video = 'https://firebasestorage.googleapis.com/v0/b/my-speaking-efbdf.appspot.com/o/Example%201.mp4?alt=media&token=ba5e96f1-4566-4bd0-a774-7c2ed959735e' 
+     var stream = https.get(video, res => {
+        console.log('working')
+        res.pipe(fs.createWriteStream('example.mp4')).on('finish', (result) => {
+         console.log('Got Pipe')
+         resolve()
+         })    
+     })
+
+});
+  }
+
+
+var uploadTheVideo = function(){
+  console.log('called second function')
+// Load client secrets from a local file.
+fs.readFile('client_secret.json', function processClientSecrets(err, content) {
+  if (err) {
+    console.log('Error loading client secret file: ' + err);
+    return;
+  }
+
+var vfile = 'https://firebasestorage.googleapis.com/v0/b/my-speaking-efbdf.appspot.com/o/Example%201.mp4'//?alt=media&token=ba5e96f1-4566-4bd0-a774-7c2ed959735e'  
+youtube.authorize(JSON.parse(content), 
+                {'params': 
+                {'part': 'snippet, status'}, 
+                'properties': 
+                {'snippet.categoryId': '22',
+                 'snippet.defaultLanguage': '',
+                 'snippet.description': 'Description of uploaded video.',
+                 'snippet.tags[]': '',
+                 'snippet.title': 'small.mp4',
+                 'status.embeddable': '',
+                 'status.license': '',
+                 'status.privacyStatus': 'unlisted',
+                 'status.publicStatsViewable': ''
+                }, 
+                media: {
+                body: vfile
+                },
+                'mediaFilename': vfile//'//example.mp4'
+                }, 
+                youtube.videoInsert);
+})
+}

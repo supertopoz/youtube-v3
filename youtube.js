@@ -1,6 +1,7 @@
 var {google} = require('googleapis');
 var {OAuth2Client} = require('google-auth-library');
 var fs = require('fs');
+var https = require('https');
 var readline = require('readline');
 var util = require('util');
 var SCOPES = ['https://www.googleapis.com/auth/youtube.force-ssl']
@@ -114,15 +115,15 @@ function createResource(properties) {
 
 
 exports.videoInsert = function(auth, requestData) {
-   
+  var video = 'https://firebasestorage.googleapis.com/v0/b/my-speaking-efbdf.appspot.com/o/Example%201.mp4?alt=media&token=ba5e96f1-4566-4bd0-a774-7c2ed959735e' 
   var service = google.youtube('v3');
   var parameters = removeEmptyParameters(requestData['params']);
   parameters['auth'] = auth;
-  parameters['media'] = { body: fs.createReadStream(requestData['mediaFilename']) };
+  parameters['media'] = { body: fs.createReadStream('example.mp4')
+
+  };
   parameters['notifySubscribers'] = false;
   parameters['resource'] = createResource(requestData['properties']);
-  
-
   const req = service.videos.insert(parameters, function(err, data) {
     if (err) {
       console.log('The API returned an error: ' + err);
@@ -131,7 +132,7 @@ exports.videoInsert = function(auth, requestData) {
       console.log(data.data.status)
   //    console.log(util.inspect(data, false, null));
     }
-    process.exit();
+   // process.exit();
   })
   
 
