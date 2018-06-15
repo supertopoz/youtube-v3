@@ -1,34 +1,35 @@
-/**
- * Copyright 2017, Google, Inc.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 'use strict';
 
-var https = require('https');
-var youtube = require('./youtube.js')
-//const {auth} = require('google-auth-library');
-// [START app]
-var fs = require('fs');
-var readline = require('readline');
+const debug = require('debug')('http')
+const https = require('https');
+const fs = require('fs');
+const readline = require('readline');
 const express = require('express');
 const app = express();
+const youtube = require('./youtube.js')
+const formidable = require('formidable');
+const http = require('http');
+const util = require('util');
 
-app.get('/upload', (req, res) => {
-  //uploadTheVideo();
-  runVideoUpload();
-  res.status(200).send('Hello, world2!').end();
-});
+debug('booting apps');
+
+// app.get('/uploader', (req, res) => {
+
+//   const video = req.query.data;
+//   const valid = video.indexOf(`firebasestorage.googleapis.com`) < 0
+
+//   if(video === undefined  || valid) {
+//        console.log(valid)
+//        console.log('not valid')
+//       res.status(200).send('invalid video link!').end();
+//     } else {    
+//     runVideoUpload(video).then(() => {
+//       res.status(200).send('Hello, world2!').end();
+//     }).catch(err => {
+//      res.status(200).send('failed')
+//     });
+//   } 
+// });
 
 // Start the server
 const PORT = process.env.PORT || 8080;
@@ -37,34 +38,26 @@ app.listen(PORT, () => {
   console.log('Press Ctrl+C to quit.');
 });
 
+// const runVideoUpload = async (video) => {
+//   const fistResponse = await getVideoFromFirebase(video);
+//   const secondResponse = await uploadTheVideo();
+// };
+
+// // var getVideoFromFirebase = function(video){
+// //   return new Promise((resolve,reject) => {
+// //       https.get(video, res => {
+// //         res.pipe(fs.createWriteStream('example.mp4')).on('finish', result => {
+// //         resolve('saved file locally')
+// //       }).on('error', (err) => {
+// //         console.log(err)
+// //         reject(err)
+// //       })    
+// //     })
+// //   });
+// // }
 
 
-const runVideoUpload = async () => {
-
-  const fistResponse = await getVideoFromFirebase();
-  const secondResponse = await uploadTheVideo();
-// const thirdAsyncRequest = await example.thirdAsyncRequest(secondResponse);
-};
-
-
-
-var getVideoFromFirebase = function(){
-    return new Promise((resolve,reject) => {
-
-   var video = 'https://firebasestorage.googleapis.com/v0/b/my-speaking-efbdf.appspot.com/o/Example%201.mp4?alt=media&token=ba5e96f1-4566-4bd0-a774-7c2ed959735e' 
-     var stream = https.get(video, res => {
-        console.log('working')
-        res.pipe(fs.createWriteStream('example.mp4')).on('finish', (result) => {
-         console.log('Got Pipe')
-         resolve()
-         })    
-     })
-
-});
-  }
-
-
-var uploadTheVideo = function(){
+var uploadTheVideo = function(path){
   console.log('called second function')
 // Load client secrets from a local file.
 fs.readFile('client_secret.json', function processClientSecrets(err, content) {
@@ -72,8 +65,6 @@ fs.readFile('client_secret.json', function processClientSecrets(err, content) {
     console.log('Error loading client secret file: ' + err);
     return;
   }
-
-var vfile = 'https://firebasestorage.googleapis.com/v0/b/my-speaking-efbdf.appspot.com/o/Example%201.mp4'//?alt=media&token=ba5e96f1-4566-4bd0-a774-7c2ed959735e'  
 youtube.authorize(JSON.parse(content), 
                 {'params': 
                 {'part': 'snippet, status'}, 
@@ -88,11 +79,59 @@ youtube.authorize(JSON.parse(content),
                  'status.privacyStatus': 'unlisted',
                  'status.publicStatsViewable': ''
                 }, 
-                media: {
-                body: vfile
-                },
-                'mediaFilename': vfile//'//example.mp4'
+                'mediaFilename': path//'example.mp4'
                 }, 
                 youtube.videoInsert);
 })
 }
+
+
+app.get('/uploadfile', (req, res) => {
+  // show a file upload form
+  res.writeHead(200, {'content-type': 'text/html'});
+  res.end(
+    '<form action="/upload" enctype="multipart/form-data" method="post">'+
+    '<input type="text" name="title"><br>'+
+    '<input type="file" name="upload" multiple="multiple"><br>'+
+    '<input type="submit" value="Upload">'+
+    '</form>'
+  );
+})
+
+app.post('/upload', (req, res) => {
+    // parse a file upload
+    var form = new formidable.IncomingForm();
+    form.uploadDir = "/Users/Jason/Desktop/youTubeV3/data";
+
+    var data = '';
+
+    form.on('progress', function(bytesReceived, bytesExpected) {
+      console.log(bytesReceived)
+      
+    }); 
+
+    // form.on('fileBegin', function(name, file) {
+      
+    //   console.log(file._writeStream)
+    // });
+    
+    // form.on('end', function(files) {
+    //   console.log(files)
+    // //  getVideoFromFirebase() 
+
+    // });
+    form.on('file', function(name, file) {
+      console.log(file.path)
+      uploadTheVideo(file.path)
+
+    });
+
+    form.parse(req, function(err, fields, files) {
+      res.writeHead(200, {'content-type': 'text/plain'});
+      res.write('received upload:\n\n');
+      res.end(util.inspect({fields: fields, files: files}));
+    });
+ 
+    return;
+  })
+

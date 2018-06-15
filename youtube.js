@@ -115,11 +115,11 @@ function createResource(properties) {
 
 
 exports.videoInsert = function(auth, requestData) {
-  var video = 'https://firebasestorage.googleapis.com/v0/b/my-speaking-efbdf.appspot.com/o/Example%201.mp4?alt=media&token=ba5e96f1-4566-4bd0-a774-7c2ed959735e' 
+  // var video = 'https://firebasestorage.googleapis.com/v0/b/my-speaking-efbdf.appspot.com/o/Example%201.mp4?alt=media&token=ba5e96f1-4566-4bd0-a774-7c2ed959735e' 
   var service = google.youtube('v3');
   var parameters = removeEmptyParameters(requestData['params']);
   parameters['auth'] = auth;
-  parameters['media'] = { body: fs.createReadStream('example.mp4')
+  parameters['media'] = { body: fs.createReadStream(requestData['mediaFilename'])
 
   };
   parameters['notifySubscribers'] = false;
