@@ -101,10 +101,8 @@ app.get('/uploadfile', (req, res) => {
 app.post('/upload', (req, res) => {
     // parse a file upload
     var form = new formidable.IncomingForm();
-    form.uploadDir = "/Users/Jason/Desktop/youTubeV3/data";
-
+    form.uploadDir = "./data";
     var data = '';
-
     form.on('progress', function(bytesReceived, bytesExpected) {
       console.log(bytesReceived)
       
@@ -123,7 +121,6 @@ app.post('/upload', (req, res) => {
     form.on('file', function(name, file) {
       console.log(file.path)
       uploadTheVideo(file.path)
-
     });
 
     form.parse(req, function(err, fields, files) {
