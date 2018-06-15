@@ -97,11 +97,11 @@ app.get('/uploadfile', (req, res) => {
     '</form>'
   );
 })
-
+//gcloud app logs tail -s default
 app.post('/upload', (req, res) => {
     // parse a file upload
     var form = new formidable.IncomingForm();
-    form.uploadDir = "./data";
+    form.uploadDir = "./";
     var data = '';
     form.on('progress', function(bytesReceived, bytesExpected) {
       console.log(bytesReceived)
