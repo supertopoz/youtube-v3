@@ -1,5 +1,5 @@
 # [START app_yaml]
-runtime: nodejs
+runtime: nodejs8
 # env: flex
 
 manual_scaling:
