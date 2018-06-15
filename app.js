@@ -10,7 +10,8 @@ const youtube = require('./youtube.js')
 const formidable = require('formidable');
 const http = require('http');
 const util = require('util');
-
+const cors = require('cors')
+app.use(cors())
 debug('booting apps');
 
 // app.get('/uploader', (req, res) => {
@@ -88,7 +89,7 @@ youtube.authorize(JSON.parse(content),
 
 app.get('/uploadfile', (req, res) => {
   // show a file upload form
-  res.writeHead(200, {'content-type': 'text/html'});
+  res.writeHead(200, {'content-type': 'video/mp4'});
   res.end(
     '<form action="/upload" enctype="multipart/form-data" method="post">'+
     '<input type="text" name="title"><br>'+
@@ -97,12 +98,12 @@ app.get('/uploadfile', (req, res) => {
     '</form>'
   );
 })
-//gcloud app logs tail -s default
+
 app.post('/upload', (req, res) => {
     // parse a file upload
     var form = new formidable.IncomingForm();
     form.uploadDir = "./";
-    var data = '';
+    form.keepExtensions = true;
     form.on('progress', function(bytesReceived, bytesExpected) {
       console.log(bytesReceived)
       
@@ -124,7 +125,7 @@ app.post('/upload', (req, res) => {
     });
 
     form.parse(req, function(err, fields, files) {
-      res.writeHead(200, {'content-type': 'text/plain'});
+      res.writeHead(200, {'content-type': 'video/mp4'});
       res.write('received upload:\n\n');
       res.end(util.inspect({fields: fields, files: files}));
     });
