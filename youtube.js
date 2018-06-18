@@ -11,15 +11,16 @@ var TOKEN_DIR = './credentials/'
 //process.env.USERPROFILE) + '/credentials/';
 
 var TOKEN_PATH = TOKEN_DIR + 'google-apis-nodejs-quickstart.json';
-console.log(TOKEN_DIR)
-console.log(TOKEN_PATH)
 
-exports.authorize = function(credentials, requestData, callback) {
+exports.authorize = function(credentials, requestData) {
+    return new Promise((resolve, reject) => {
+
+
     var clientSecret = credentials.installed.client_secret;
     var clientId = credentials.installed.client_id;
     var redirectUrl = credentials.installed.redirect_uris[0];
-  //  var auth = new OAuth2Client();
     var oauth2Client = new OAuth2Client(clientId, clientSecret, redirectUrl);
+     
   // Check if we have previously stored a token.
   fs.readFile(TOKEN_PATH, function(err, token) {
     if (err) {
@@ -28,9 +29,16 @@ exports.authorize = function(credentials, requestData, callback) {
     } else {
       oauth2Client.credentials = JSON.parse(token);
       console.log('token exists')
-      callback(oauth2Client, requestData);
+      videoInsert(oauth2Client, requestData).then(result => {
+        const filePath = requestData.mediaFilename;
+        result['filePath'] = filePath
+        resolve(result)
+      }).catch(err => {
+        reject(err)
+      })
     }
   });
+  })
 }
 
 function getNewToken(oauth2Client, requestData, callback) {
@@ -114,45 +122,25 @@ function createResource(properties) {
 }
 
 
-exports.videoInsert = function(auth, requestData) {
-  // var video = 'https://firebasestorage.googleapis.com/v0/b/my-speaking-efbdf.appspot.com/o/Example%201.mp4?alt=media&token=ba5e96f1-4566-4bd0-a774-7c2ed959735e' 
-  var service = google.youtube('v3');
-  var parameters = removeEmptyParameters(requestData['params']);
-  parameters['auth'] = auth;
-  parameters['media'] = { body: fs.createReadStream(requestData['mediaFilename'])
+const videoInsert = function(auth, requestData) {
+  return new Promise((resolve, reject) => {
 
-  };
-  parameters['notifySubscribers'] = false;
-  parameters['resource'] = createResource(requestData['properties']);
-  const req = service.videos.insert(parameters, function(err, data) {
-    if (err) {
-      console.log('The API returned an error: ' + err);
-    }
-    if (data) {
-      console.log(data.data.status)
-  //    console.log(util.inspect(data, false, null));
-    }
-   // process.exit();
+
+    var service = google.youtube('v3');
+    var parameters = removeEmptyParameters(requestData['params']);
+    parameters['auth'] = auth;
+    parameters['media'] = { body: fs.createReadStream(requestData['mediaFilename']) 
+    };
+    parameters['notifySubscribers'] = false;
+    parameters['resource'] = createResource(requestData['properties']);
+    const req = service.videos.insert(parameters, function(err, data) {
+      if (err) {
+        console.log('The API returned an error: ' + err);
+      }
+      if (data) {
+        resolve(data.data.status);
+      }
+      })
   })
   
-
-  // var fileSize = fs.statSync(requestData['mediaFilename']).size;
-  // //var fileSize = fs.statSync(requestData['video.flv']).size;
-  // console.log(fileSize)
-  // //show some progress
-  // var id = setInterval(function () {
-  //   console.log(req)
-  //   var uploadedBytes = req.req.connection._bytesDispatched;    
-  //   var uploadedMBytes = uploadedBytes / 1000000;
-  //   var progress = uploadedBytes > fileSize
-  //       ? 100 : (uploadedBytes / fileSize) * 100;
-  //   process.stdout.clearLine();
-  //   process.stdout.cursorTo(0);
-  //   process.stdout.write(uploadedMBytes.toFixed(2) + ' MBs uploaded. ' +
-  //      progress.toFixed(2) + '% completed.');
-  //   if (progress === 100) {
-  //     process.stdout.write('Done uploading, waiting for response...');
-  //     clearInterval(id);
-  //   }
-  // }, 250);
 }
